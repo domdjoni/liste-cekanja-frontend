@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+
 interface TopCekanje {
   zahvat__naziv: string;
   regija__naziv: string;
@@ -37,7 +39,7 @@ export default function Home() {
   const [prikaziDropdown, setPrikaziDropdown] = useState(false);
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/statistika/')
+    fetch(`${API_URL}/api/statistika/`)
       .then(res => res.json())
       .then(data => setStatistika(data));
   }, []);
@@ -49,7 +51,7 @@ export default function Home() {
       return;
     }
     const timeout = setTimeout(() => {
-      fetch(`http://127.0.0.1:8000/api/zahvati/?search=${pretraga}`)
+      fetch(`${API_URL}/api/zahvati/?search=${pretraga}`)
         .then(res => res.json())
         .then(data => {
           setZahvati(data.results || data);
@@ -75,7 +77,6 @@ export default function Home() {
   return (
     <main style={{ maxWidth: '900px', margin: '0 auto', padding: '2rem', fontFamily: 'sans-serif' }}>
 
-      {/* HEADER */}
       <div style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '1.8rem', margin: '0 0 0.25rem', color: '#1d3557' }}>
           🏥 Liste čekanja u Hrvatskoj
@@ -85,7 +86,6 @@ export default function Home() {
         </p>
       </div>
 
-      {/* PRETRAŽIVANJE */}
       <div style={{ position: 'relative', marginBottom: '2rem' }}>
         <input
           type="text"
@@ -103,7 +103,6 @@ export default function Home() {
           }}
         />
 
-        {/* DROPDOWN */}
         {prikaziDropdown && zahvati.length > 0 && (
           <div style={{
             position: 'absolute',
@@ -139,7 +138,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* TOP 10 */}
       <section style={{ marginBottom: '3rem' }}>
         <h2 style={{ color: '#e63946', marginBottom: '1rem', fontSize: '1.2rem' }}>
           ⚠️ Top 10 najduljeg čekanja u Hrvatskoj
@@ -158,13 +156,12 @@ export default function Home() {
               cursor: 'pointer',
             }}
             onClick={() => {
-              const zahvatNaziv = item.zahvat__naziv;
-              fetch(`http://127.0.0.1:8000/api/zahvati/?search=${zahvatNaziv}`)
+              fetch(`${API_URL}/api/zahvati/?search=${item.zahvat__naziv}`)
                 .then(res => res.json())
                 .then(data => {
-                  const zahvati = data.results || data;
-                  if (zahvati.length > 0) {
-                    router.push(`/zahvat/${zahvati[0].cezih_id}`);
+                  const rezultati = data.results || data;
+                  if (rezultati.length > 0) {
+                    router.push(`/zahvat/${rezultati[0].cezih_id}`);
                   }
                 });
             }}
@@ -196,16 +193,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* PO REGIJAMA */}
       <section style={{ marginBottom: '3rem' }}>
         <h2 style={{ color: '#1d3557', marginBottom: '1rem', fontSize: '1.2rem' }}>
           📍 Prosjek čekanja po županijama
         </h2>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-          gap: '1rem',
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }}>
           {statistika?.cekanje_po_regiji.map((regija, i) => (
             <div key={i} style={{
               padding: '1.25rem',
@@ -220,15 +212,11 @@ export default function Home() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.85rem' }}>
                 <div>
                   <div style={{ color: '#666' }}>Prosjek</div>
-                  <div style={{ fontWeight: 'bold', color: '#1d3557' }}>
-                    {Math.round(regija.prosjecno)} dana
-                  </div>
+                  <div style={{ fontWeight: 'bold', color: '#1d3557' }}>{Math.round(regija.prosjecno)} dana</div>
                 </div>
                 <div>
                   <div style={{ color: '#666' }}>Maksimum</div>
-                  <div style={{ fontWeight: 'bold', color: '#e63946' }}>
-                    {regija.maksimalno} dana
-                  </div>
+                  <div style={{ fontWeight: 'bold', color: '#e63946' }}>{regija.maksimalno} dana</div>
                 </div>
               </div>
             </div>
@@ -236,14 +224,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer style={{
-        borderTop: '1px solid #dee2e6',
-        paddingTop: '1rem',
-        color: '#999',
-        fontSize: '0.8rem',
-        textAlign: 'center',
-      }}>
+      <footer style={{ borderTop: '1px solid #dee2e6', paddingTop: '1rem', color: '#999', fontSize: '0.8rem', textAlign: 'center' }}>
         Podaci preuzeti s HZZO liste čekanja (liste.cezih.hr) · Ažuriranje svakih 2 sata
       </footer>
 
