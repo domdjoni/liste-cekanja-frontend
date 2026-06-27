@@ -65,7 +65,7 @@ function BojaOznaka({ dana }: { dana: number }) {
       fontSize: '0.7rem',
       fontWeight: '600',
       letterSpacing: '0.05em',
-      textTransform: 'uppercase',
+      textTransform: 'uppercase' as const,
     }}>{tekst}</span>
   );
 }
@@ -133,8 +133,8 @@ export default function Home() {
     <>
       <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #f8fafc; }
-        
+        body { background: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
         .hero {
           background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
           padding: 3rem 2rem 4rem;
@@ -178,13 +178,29 @@ export default function Home() {
         .hero p {
           color: #94a3b8;
           font-size: 1rem;
-          margin-bottom: 2rem;
+          margin-bottom: 1.5rem;
         }
 
-        .search-wrap {
-          position: relative;
-          max-width: 640px;
+        .karta-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          background: rgba(255,255,255,0.1);
+          border: 1px solid rgba(255,255,255,0.2);
+          color: #e2e8f0;
+          padding: 8px 16px;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 0.85rem;
+          margin-bottom: 1.5rem;
+          transition: all 0.2s;
         }
+        .karta-btn:hover {
+          background: rgba(255,255,255,0.15);
+          border-color: rgba(255,255,255,0.3);
+        }
+
+        .search-wrap { position: relative; max-width: 640px; }
         .search-input {
           width: 100%;
           padding: 1rem 1rem 1rem 3rem;
@@ -195,7 +211,6 @@ export default function Home() {
           border-radius: 12px;
           outline: none;
           transition: border-color 0.2s, background 0.2s;
-          backdrop-filter: blur(10px);
         }
         .search-input::placeholder { color: #64748b; }
         .search-input:focus {
@@ -208,7 +223,6 @@ export default function Home() {
           top: 50%;
           transform: translateY(-50%);
           color: #64748b;
-          font-size: 1rem;
           pointer-events: none;
         }
 
@@ -240,14 +254,8 @@ export default function Home() {
           background: #334155;
           color: #60a5fa;
         }
-        .dropdown-item::before {
-          content: '→';
-          color: #475569;
-          font-size: 0.8rem;
-        }
-        .dropdown-item:hover::before, .dropdown-item.focused::before {
-          color: #3b82f6;
-        }
+        .dropdown-item::before { content: '→'; color: #475569; font-size: 0.8rem; }
+        .dropdown-item:hover::before, .dropdown-item.focused::before { color: #3b82f6; }
 
         .stats-bar {
           display: flex;
@@ -266,11 +274,7 @@ export default function Home() {
           gap: 0.75rem;
           margin-bottom: 1.25rem;
         }
-        .section-title {
-          font-size: 1.1rem;
-          font-weight: 700;
-          color: #0f172a;
-        }
+        .section-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
         .section-pill {
           background: #fee2e2;
           color: #dc2626;
@@ -294,7 +298,6 @@ export default function Home() {
           border-radius: 10px;
           cursor: pointer;
           transition: all 0.2s;
-          text-decoration: none;
         }
         .top-item:hover {
           border-color: #3b82f6;
@@ -305,26 +308,12 @@ export default function Home() {
           background: linear-gradient(135deg, #fff5f5, #fff);
           border-color: #fca5a5;
         }
-        .rank {
-          font-size: 1.1rem;
-          font-weight: 800;
-          color: #cbd5e1;
-          text-align: center;
-        }
+        .rank { font-size: 1.1rem; font-weight: 800; color: #cbd5e1; text-align: center; }
         .rank.first-rank { color: #dc2626; }
         .item-name { font-weight: 600; color: #1e293b; font-size: 0.95rem; margin-bottom: 0.2rem; }
         .item-region { font-size: 0.8rem; color: #64748b; }
-        .dana-badge {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-          gap: 4px;
-        }
-        .dana-broj {
-          font-size: 1.1rem;
-          font-weight: 800;
-          color: #dc2626;
-        }
+        .dana-badge { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .dana-broj { font-size: 1.1rem; font-weight: 800; }
 
         .regije-grid {
           display: grid;
@@ -338,18 +327,8 @@ export default function Home() {
           border-radius: 10px;
           padding: 1.25rem;
           transition: all 0.2s;
-          cursor: pointer;
           position: relative;
           overflow: hidden;
-        }
-        .regija-card::before {
-          content: '';
-          position: absolute;
-          left: 0;
-          top: 0;
-          bottom: 0;
-          width: 4px;
-          border-radius: 10px 0 0 10px;
         }
         .regija-card:hover {
           box-shadow: 0 4px 16px rgba(0,0,0,0.08);
@@ -374,7 +353,6 @@ export default function Home() {
         }
       `}</style>
 
-      {/* HERO */}
       <div className="hero">
         <div className="hero-inner">
           <div className="hero-badge">
@@ -383,7 +361,10 @@ export default function Home() {
           <h1>Liste čekanja<br /><span>u Hrvatskoj</span></h1>
           <p>Transparentni pregled čekanja na medicinske pretrage i zahvate u svim županijama.</p>
 
-          {/* PRETRAŽIVANJE */}
+          <button className="karta-btn" onClick={() => router.push('/karta')}>
+            🗺️ Pogledaj interaktivnu kartu Hrvatske →
+          </button>
+
           <div className="search-wrap">
             <span className="search-icon">🔍</span>
             <input
@@ -430,10 +411,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* MAIN */}
       <div className="main">
-
-        {/* TOP 10 */}
         <div className="section-header">
           <h2 className="section-title">Najdulje čekanje</h2>
           <span className="section-pill">Top 10</span>
@@ -468,7 +446,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* PO REGIJAMA */}
         <div className="section-header">
           <h2 className="section-title">Čekanje po županijama</h2>
         </div>
@@ -477,12 +454,12 @@ export default function Home() {
           {statistika?.cekanje_po_regiji.map((regija, i) => {
             const boja = regija.prosjecno > 80 ? '#dc2626' : regija.prosjecno > 40 ? '#d97706' : '#16a34a';
             return (
-              <div
-                key={i}
-                className="regija-card"
-                style={{ '--accent': boja } as React.CSSProperties}
-              >
-                <style>{`.regija-card:nth-child(${i + 1})::before { background: ${boja}; }`}</style>
+              <div key={i} className="regija-card">
+                <div style={{
+                  position: 'absolute', left: 0, top: 0, bottom: 0,
+                  width: '4px', background: boja,
+                  borderRadius: '10px 0 0 10px'
+                }}></div>
                 <div className="regija-naziv">{regija.regija__naziv}</div>
                 <div className="regija-stats">
                   <div>
@@ -500,7 +477,6 @@ export default function Home() {
             );
           })}
         </div>
-
       </div>
 
       <div className="footer">
