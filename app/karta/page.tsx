@@ -66,7 +66,6 @@ export default function KartaPage() {
       <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-
         .hero {
           background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
           padding: 1.5rem 2rem;
@@ -82,7 +81,6 @@ export default function KartaPage() {
         .back-btn:hover { background: rgba(255,255,255,0.12); color: #e2e8f0; }
         .hero h1 { font-size: 1.4rem; font-weight: 700; color: #fff; }
         .hero p { color: #64748b; font-size: 0.85rem; margin-top: 0.25rem; }
-
         .layout {
           max-width: 1100px; margin: 0 auto;
           padding: 1.5rem 2rem;
@@ -90,27 +88,21 @@ export default function KartaPage() {
           grid-template-columns: 1fr 280px;
           gap: 1.5rem;
         }
-
         .map-wrap {
-          background: linear-gradient(160deg, #e8f4fd 0%, #dbeafe 100%);
-          border: 1px solid #e2e8f0;
+          background: #e8f4fd;
+          border: 1px solid #bfdbfe;
           border-radius: 16px;
           overflow: hidden;
           position: relative;
           aspect-ratio: 1.15;
         }
-
         .map-svg { width: 100%; height: 100%; display: block; }
-
         .county-group { cursor: pointer; }
-        .county-circle {
-          transition: r 0.2s, filter 0.2s;
-        }
+        .county-circle { transition: r 0.2s, filter 0.2s; }
         .county-group:hover .county-circle {
-          filter: brightness(1.15) drop-shadow(0 0 4px rgba(0,0,0,0.3));
+          filter: brightness(1.15) drop-shadow(0 0 3px rgba(0,0,0,0.3));
         }
         .county-text { pointer-events: none; user-select: none; }
-
         .tooltip {
           position: absolute;
           background: #0f172a;
@@ -134,9 +126,7 @@ export default function KartaPage() {
           border-bottom: 0;
           border-top-color: #0f172a;
         }
-
         .sidebar { display: flex; flex-direction: column; gap: 1rem; }
-
         .card {
           background: #fff;
           border: 1px solid #e2e8f0;
@@ -153,13 +143,11 @@ export default function KartaPage() {
           text-transform: uppercase; letter-spacing: 0.07em;
           margin-bottom: 0.875rem;
         }
-
         .legenda-item {
           display: flex; align-items: center; gap: 0.75rem;
           margin-bottom: 0.5rem; font-size: 0.82rem; color: #475569;
         }
         .legenda-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-
         .info-naziv {
           font-size: 0.95rem; font-weight: 700;
           color: #1e293b; margin-bottom: 1rem; line-height: 1.3;
@@ -174,20 +162,19 @@ export default function KartaPage() {
           color: #94a3b8; font-size: 0.85rem;
           text-align: center; padding: 0.5rem 0; line-height: 1.6;
         }
-
         .rang-item {
           display: flex; justify-content: space-between; align-items: center;
           padding: 0.4rem 0; border-bottom: 1px solid #f8fafc; font-size: 0.78rem;
+          cursor: pointer;
         }
         .rang-item:last-child { border-bottom: none; }
-
+        .rang-item:hover { background: #f8fafc; }
         .spinner {
           width: 24px; height: 24px;
           border: 2px solid #e2e8f0; border-top-color: #3b82f6;
           border-radius: 50%; animation: spin 0.8s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-
         @media (max-width: 768px) {
           .layout { grid-template-columns: 1fr; }
         }
@@ -217,19 +204,71 @@ export default function KartaPage() {
                 xmlns="http://www.w3.org/2000/svg"
                 onMouseLeave={() => setOdabranaRegija(null)}
               >
-                {/* Pozadinska mreža */}
-                <defs>
-                  <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#c7d9ed" strokeWidth="0.2" opacity="0.5"/>
-                  </pattern>
-                </defs>
-                <rect width="100" height="100" fill="url(#grid)"/>
+                {/* Pozadina - more */}
+                <rect width="100" height="100" fill="#bfdbfe" opacity="0.3"/>
 
-                {/* Natpis */}
-                <text x="50" y="96" textAnchor="middle" fill="#94a3b8" fontSize="3" fontFamily="sans-serif">
-                  Hrvatska — klikni na županiju
+                {/* Jadransko more */}
+                <path
+                  d="M 8,35 L 18,30 L 20,33 L 22,44 L 24,56
+                     L 28,64 L 33,72 L 40,80 L 48,87 L 52,89
+                     L 50,95 L 38,90 L 26,82 L 16,70 L 10,58
+                     L 7,46 L 8,35 Z"
+                  fill="#93c5fd"
+                  opacity="0.4"
+                />
+
+                {/* Hrvatska - kontinentalni dio */}
+                <path
+                  d="M 44,13 L 48,13 L 52,13 L 58,13 L 64,12
+                     L 68,11 L 72,10 L 76,10 L 80,11 L 84,12
+                     L 88,14 L 92,17 L 94,22 L 95,27 L 93,32
+                     L 90,36 L 87,39 L 84,40 L 80,39 L 76,37
+                     L 72,36 L 68,37 L 64,39 L 60,40 L 56,39
+                     L 52,37 L 48,35 L 44,34 L 40,35 L 36,37
+                     L 32,38 L 28,37 L 24,35 L 20,33 L 18,30
+                     L 17,27 L 18,24 L 20,21 L 23,19 L 27,17
+                     L 31,16 L 35,15 L 39,14 L 44,13 Z"
+                  fill="#dbeafe"
+                  stroke="#93c5fd"
+                  strokeWidth="0.5"
+                />
+
+                {/* Hrvatska - dalmatinska obala */}
+                <path
+                  d="M 28,37 L 26,40 L 24,44 L 22,48 L 22,52
+                     L 24,56 L 28,64 L 33,72 L 40,80 L 48,87
+                     L 52,89 L 56,89 L 60,87 L 63,84 L 64,80
+                     L 62,76 L 58,72 L 54,68 L 50,64 L 46,60
+                     L 42,56 L 38,52 L 34,48 L 30,44 L 28,40
+                     L 28,37 Z"
+                  fill="#dbeafe"
+                  stroke="#93c5fd"
+                  strokeWidth="0.5"
+                />
+
+                {/* Slavonija - istočni dio */}
+                <path
+                  d="M 84,40 L 87,39 L 90,36 L 93,32 L 95,27
+                     L 96,30 L 97,35 L 96,40 L 94,44 L 90,46
+                     L 86,46 L 84,44 L 84,40 Z"
+                  fill="#dbeafe"
+                  stroke="#93c5fd"
+                  strokeWidth="0.5"
+                />
+
+                {/* Jadran natpis */}
+                <text
+                  x="10" y="62"
+                  fill="#3b82f6"
+                  fontSize="2.2"
+                  fontFamily="sans-serif"
+                  opacity="0.6"
+                  transform="rotate(-65, 10, 62)"
+                >
+                  Jadransko more
                 </text>
 
+                {/* Županije - krugovi */}
                 {ZUPANIJE.map((z, i) => {
                   const stat = getStat(z.naziv);
                   if (!stat) return null;
@@ -242,9 +281,8 @@ export default function KartaPage() {
                       className="county-group"
                       onMouseEnter={(e) => {
                         setOdabranaRegija(stat);
-                        const svg = e.currentTarget.closest('svg')!;
+                        const svg = e.currentTarget.closest('svg') as SVGSVGElement;
                         const rect = svg.getBoundingClientRect();
-                        const wrap = svg.closest('.map-wrap')!.getBoundingClientRect();
                         const scaleX = rect.width / 100;
                         const scaleY = rect.height / 100;
                         setHoverPos({
@@ -255,8 +293,8 @@ export default function KartaPage() {
                       onClick={() => setOdabranaRegija(stat)}
                     >
                       {/* Sjenka */}
-                      <circle cx={z.x + 0.3} cy={z.y + 0.3} r={r} fill="rgba(0,0,0,0.15)" />
-                      {/* Glavni krug */}
+                      <circle cx={z.x + 0.3} cy={z.y + 0.3} r={r} fill="rgba(0,0,0,0.12)" />
+                      {/* Krug */}
                       <circle
                         className="county-circle"
                         cx={z.x}
@@ -267,11 +305,11 @@ export default function KartaPage() {
                         stroke="#fff"
                         strokeWidth={0.6}
                       />
-                      {/* Broj dana */}
+                      {/* Broj */}
                       <text
                         className="county-text"
                         x={z.x}
-                        y={z.y + 0.5}
+                        y={z.y + 0.4}
                         textAnchor="middle"
                         dominantBaseline="middle"
                         fill="#fff"
@@ -298,7 +336,7 @@ export default function KartaPage() {
                   <div style={{ color: getBoja(odabranaRegija.prosjecno), fontWeight: '700' }}>
                     Prosjek: {Math.round(odabranaRegija.prosjecno)} dana
                   </div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                  <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '2px' }}>
                     Max: {odabranaRegija.maksimalno} dana
                   </div>
                 </div>
@@ -356,7 +394,6 @@ export default function KartaPage() {
               <div
                 key={i}
                 className="rang-item"
-                style={{ cursor: 'pointer' }}
                 onClick={() => setOdabranaRegija(r)}
               >
                 <span style={{ color: '#475569' }}>
