@@ -12,35 +12,38 @@ interface RegijaStatistika {
   ukupno_zapisa: number;
 }
 
-const ZUPANIJE = [
-  { naziv: 'Međimurska županija', x: 72, y: 5 },
-  { naziv: 'Varaždinska županija', x: 62, y: 11 },
-  { naziv: 'Krapinsko-zagorska županija', x: 50, y: 11 },
-  { naziv: 'Koprivničko-križevačka županija', x: 74, y: 17 },
-  { naziv: 'Bjelovarsko-bilogorska županija', x: 71, y: 25 },
-  { naziv: 'Zagrebačka županija i Grad Zagreb', x: 52, y: 22 },
-  { naziv: 'Virovitičko-podravska županija', x: 82, y: 22 },
-  { naziv: 'Sisačko-moslavačka županija', x: 56, y: 33 },
-  { naziv: 'Karlovačka županija', x: 42, y: 35 },
-  { naziv: 'Požeško-slavonska županija', x: 75, y: 34 },
-  { naziv: 'Brodsko-posavska županija', x: 74, y: 42 },
-  { naziv: 'Osječko-baranjska županija', x: 88, y: 28 },
-  { naziv: 'Vukovarsko-srijemska županija', x: 92, y: 40 },
-  { naziv: 'Primorsko-goranska županija', x: 30, y: 37 },
-  { naziv: 'Ličko-senjska županija', x: 38, y: 47 },
-  { naziv: 'Zadarska županija', x: 36, y: 61 },
-  { naziv: 'Šibensko-kninska županija', x: 44, y: 67 },
-  { naziv: 'Splitsko-dalmatinska županija', x: 52, y: 76 },
-  { naziv: 'Istarska županija', x: 14, y: 39 },
-  { naziv: 'Dubrovačko-neretvanska županija', x: 64, y: 88 },
-];
+// Mapiranje SVG id-a na naziv regije u bazi
+const SVG_ID_MAP: Record<string, string> = {
+  'HR20': 'Međimurska županija',
+  'HR05': 'Varaždinska županija',
+  'HR02': 'Krapinsko-zagorska županija',
+  'HR06': 'Koprivničko-križevačka županija',
+  'HR07': 'Bjelovarsko-bilogorska županija',
+  'HR21': 'Zagrebačka županija i Grad Zagreb',
+  'HR01': 'Zagrebačka županija i Grad Zagreb',
+  'HR10': 'Virovitičko-podravska županija',
+  'HR03': 'Sisačko-moslavačka županija',
+  'HR04': 'Karlovačka županija',
+  'HR11': 'Požeško-slavonska županija',
+  'HR12': 'Brodsko-posavska županija',
+  'HR14': 'Osječko-baranjska županija',
+  'HR16': 'Vukovarsko-srijemska županija',
+  'HR08': 'Primorsko-goranska županija',
+  'HR09': 'Ličko-senjska županija',
+  'HR13': 'Zadarska županija',
+  'HR15': 'Šibensko-kninska županija',
+  'HR17': 'Splitsko-dalmatinska županija',
+  'HR18': 'Istarska županija',
+  'HR19': 'Dubrovačko-neretvanska županija',
+};
 
 export default function KartaPage() {
   const router = useRouter();
   const [statistika, setStatistika] = useState<RegijaStatistika[]>([]);
   const [odabranaRegija, setOdabranaRegija] = useState<RegijaStatistika | null>(null);
-  const [hoverPos, setHoverPos] = useState({ x: 0, y: 0 });
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [svgContent, setSvgContent] = useState<string>('');
 
   useEffect(() => {
     fetch(`${API_URL}/api/statistika/`)
@@ -51,8 +54,17 @@ export default function KartaPage() {
       });
   }, []);
 
-  const getStat = (naziv: string) =>
-    statistika.find(r => r.regija__naziv === naziv);
+  useEffect(() => {
+    fetch('/hrvatska.svg')
+      .then(res => res.text())
+      .then(text => setSvgContent(text));
+  }, []);
+
+  const getStat = (svgId: string): RegijaStatistika | undefined => {
+    const naziv = SVG_ID_MAP[svgId];
+    if (!naziv) return undefined;
+    return statistika.find(r => r.regija__naziv === naziv);
+  };
 
   const getBoja = (prosjek: number) => {
     if (prosjek > 80) return '#dc2626';
@@ -60,6 +72,76 @@ export default function KartaPage() {
     if (prosjek > 30) return '#ca8a04';
     return '#16a34a';
   };
+
+  // Inject colors into SVG paths
+  const getColoredSvg = () => {
+    if (!svgContent || statistika.length === 0) return svgContent;
+
+    let colored = svgContent;
+
+    Object.keys(SVG_ID_MAP).forEach(svgId => {
+      const stat = getStat(svgId);
+      if (!stat) return;
+
+      const boja = getBoja(stat.prosjecno);
+      const isHovered = hoveredId === svgId;
+      const opacity = isHovered ? '1' : '0.85';
+      const strokeWidth = isHovered ? '2' : '0.5';
+
+      // Replace the path's fill color
+      const regex = new RegExp(`(id="${svgId}"[^>]*>)`, 'g');
+      colored = colored.replace(
+        new RegExp(`(<path[^>]*id="${svgId}"[^/]*/?>)`, 'g'),
+        (match) => {
+          // Remove existing style/fill attributes and add new ones
+          let newPath = match
+            .replace(/fill="[^"]*"/g, '')
+            .replace(/stroke="[^"]*"/g, '')
+            .replace(/style="[^"]*"/g, '');
+
+          // Insert before the closing >
+          newPath = newPath.replace(
+            /\/?>$/,
+            ` fill="${boja}" fill-opacity="${opacity}" stroke="white" stroke-width="${strokeWidth}" style="cursor:pointer;transition:fill-opacity 0.2s"/>`
+          );
+          return newPath;
+        }
+      );
+    });
+
+    return colored;
+  };
+
+  const handleSvgClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as SVGElement;
+    const path = target.closest('path');
+    if (!path) return;
+
+    const id = path.getAttribute('id');
+    if (!id || !SVG_ID_MAP[id]) return;
+
+    const stat = getStat(id);
+    if (stat) setOdabranaRegija(stat);
+  };
+
+  const handleSvgMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as SVGElement;
+    const path = target.closest('path');
+    if (!path) {
+      setHoveredId(null);
+      return;
+    }
+    const id = path.getAttribute('id');
+    if (id && SVG_ID_MAP[id]) {
+      setHoveredId(id);
+      const stat = getStat(id);
+      if (stat) setOdabranaRegija(stat);
+    } else {
+      setHoveredId(null);
+    }
+  };
+
+  const bojaDana = (dana: number) => getBoja(dana);
 
   return (
     <>
@@ -94,37 +176,20 @@ export default function KartaPage() {
           border-radius: 16px;
           overflow: hidden;
           position: relative;
-          aspect-ratio: 1.15;
         }
-        .map-svg { width: 100%; height: 100%; display: block; }
-        .county-group { cursor: pointer; }
-        .county-circle { transition: r 0.2s, filter 0.2s; }
-        .county-group:hover .county-circle {
-          filter: brightness(1.15) drop-shadow(0 0 3px rgba(0,0,0,0.3));
+        .map-wrap svg {
+          width: 100%;
+          height: auto;
+          display: block;
         }
-        .county-text { pointer-events: none; user-select: none; }
-        .tooltip {
-          position: absolute;
-          background: #0f172a;
-          color: #fff;
-          padding: 8px 14px;
-          border-radius: 10px;
-          font-size: 0.82rem;
-          pointer-events: none;
-          z-index: 20;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-          white-space: nowrap;
-          transform: translate(-50%, calc(-100% - 12px));
-          border: 1px solid rgba(255,255,255,0.1);
+        .map-wrap path {
+          cursor: pointer;
+          transition: fill-opacity 0.2s, stroke-width 0.2s;
         }
-        .tooltip::after {
-          content: '';
-          position: absolute;
-          bottom: -6px; left: 50%;
-          transform: translateX(-50%);
-          border: 6px solid transparent;
-          border-bottom: 0;
-          border-top-color: #0f172a;
+        .map-wrap path:hover {
+          fill-opacity: 1 !important;
+          stroke-width: 2 !important;
+          stroke: #1e293b !important;
         }
         .sidebar { display: flex; flex-direction: column; gap: 1rem; }
         .card {
@@ -147,7 +212,7 @@ export default function KartaPage() {
           display: flex; align-items: center; gap: 0.75rem;
           margin-bottom: 0.5rem; font-size: 0.82rem; color: #475569;
         }
-        .legenda-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+        .legenda-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
         .info-naziv {
           font-size: 0.95rem; font-weight: 700;
           color: #1e293b; margin-bottom: 1rem; line-height: 1.3;
@@ -164,8 +229,8 @@ export default function KartaPage() {
         }
         .rang-item {
           display: flex; justify-content: space-between; align-items: center;
-          padding: 0.4rem 0; border-bottom: 1px solid #f8fafc; font-size: 0.78rem;
-          cursor: pointer;
+          padding: 0.4rem 0; border-bottom: 1px solid #f8fafc;
+          font-size: 0.78rem; cursor: pointer;
         }
         .rang-item:last-child { border-bottom: none; }
         .rang-item:hover { background: #f8fafc; }
@@ -186,162 +251,23 @@ export default function KartaPage() {
             ← Nazad na pretraživanje
           </button>
           <h1>Interaktivna karta čekanja</h1>
-          <p>Pređi mišem ili klikni na krug · Veličina i boja = prosječno čekanje</p>
+          <p>Pređi mišem ili klikni na županiju · Boja = prosječno čekanje</p>
         </div>
       </div>
 
       <div className="layout">
         <div className="map-wrap">
-          {loading ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+          {loading || !svgContent ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '400px' }}>
               <div className="spinner"></div>
             </div>
           ) : (
-            <>
-              <svg
-                className="map-svg"
-                viewBox="0 0 100 100"
-                xmlns="http://www.w3.org/2000/svg"
-                onMouseLeave={() => setOdabranaRegija(null)}
-              >
-                {/* Pozadina - more */}
-                <rect width="100" height="100" fill="#bfdbfe" opacity="0.3"/>
-
-                {/* Jadransko more */}
-                <path
-                  d="M 8,35 L 18,30 L 20,33 L 22,44 L 24,56
-                     L 28,64 L 33,72 L 40,80 L 48,87 L 52,89
-                     L 50,95 L 38,90 L 26,82 L 16,70 L 10,58
-                     L 7,46 L 8,35 Z"
-                  fill="#93c5fd"
-                  opacity="0.4"
-                />
-
-                {/* Hrvatska - kontinentalni dio */}
-                <path
-                  d="M 44,13 L 48,13 L 52,13 L 58,13 L 64,12
-                     L 68,11 L 72,10 L 76,10 L 80,11 L 84,12
-                     L 88,14 L 92,17 L 94,22 L 95,27 L 93,32
-                     L 90,36 L 87,39 L 84,40 L 80,39 L 76,37
-                     L 72,36 L 68,37 L 64,39 L 60,40 L 56,39
-                     L 52,37 L 48,35 L 44,34 L 40,35 L 36,37
-                     L 32,38 L 28,37 L 24,35 L 20,33 L 18,30
-                     L 17,27 L 18,24 L 20,21 L 23,19 L 27,17
-                     L 31,16 L 35,15 L 39,14 L 44,13 Z"
-                  fill="#dbeafe"
-                  stroke="#93c5fd"
-                  strokeWidth="0.5"
-                />
-
-                {/* Hrvatska - dalmatinska obala */}
-                <path
-                  d="M 28,37 L 26,40 L 24,44 L 22,48 L 22,52
-                     L 24,56 L 28,64 L 33,72 L 40,80 L 48,87
-                     L 52,89 L 56,89 L 60,87 L 63,84 L 64,80
-                     L 62,76 L 58,72 L 54,68 L 50,64 L 46,60
-                     L 42,56 L 38,52 L 34,48 L 30,44 L 28,40
-                     L 28,37 Z"
-                  fill="#dbeafe"
-                  stroke="#93c5fd"
-                  strokeWidth="0.5"
-                />
-
-                {/* Slavonija - istočni dio */}
-                <path
-                  d="M 84,40 L 87,39 L 90,36 L 93,32 L 95,27
-                     L 96,30 L 97,35 L 96,40 L 94,44 L 90,46
-                     L 86,46 L 84,44 L 84,40 Z"
-                  fill="#dbeafe"
-                  stroke="#93c5fd"
-                  strokeWidth="0.5"
-                />
-
-                {/* Jadran natpis */}
-                <text
-                  x="10" y="62"
-                  fill="#3b82f6"
-                  fontSize="2.2"
-                  fontFamily="sans-serif"
-                  opacity="0.6"
-                  transform="rotate(-65, 10, 62)"
-                >
-                  Jadransko more
-                </text>
-
-                {/* Županije - krugovi */}
-                {ZUPANIJE.map((z, i) => {
-                  const stat = getStat(z.naziv);
-                  if (!stat) return null;
-                  const boja = getBoja(stat.prosjecno);
-                  const r = Math.max(3.5, Math.min(7, 3 + stat.prosjecno / 25));
-
-                  return (
-                    <g
-                      key={i}
-                      className="county-group"
-                      onMouseEnter={(e) => {
-                        setOdabranaRegija(stat);
-                        const svg = e.currentTarget.closest('svg') as SVGSVGElement;
-                        const rect = svg.getBoundingClientRect();
-                        const scaleX = rect.width / 100;
-                        const scaleY = rect.height / 100;
-                        setHoverPos({
-                          x: z.x * scaleX,
-                          y: z.y * scaleY,
-                        });
-                      }}
-                      onClick={() => setOdabranaRegija(stat)}
-                    >
-                      {/* Sjenka */}
-                      <circle cx={z.x + 0.3} cy={z.y + 0.3} r={r} fill="rgba(0,0,0,0.12)" />
-                      {/* Krug */}
-                      <circle
-                        className="county-circle"
-                        cx={z.x}
-                        cy={z.y}
-                        r={r}
-                        fill={boja}
-                        fillOpacity={0.9}
-                        stroke="#fff"
-                        strokeWidth={0.6}
-                      />
-                      {/* Broj */}
-                      <text
-                        className="county-text"
-                        x={z.x}
-                        y={z.y + 0.4}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        fill="#fff"
-                        fontSize={r > 5 ? "2.2" : "1.8"}
-                        fontWeight="700"
-                        fontFamily="sans-serif"
-                      >
-                        {Math.round(stat.prosjecno)}
-                      </text>
-                    </g>
-                  );
-                })}
-              </svg>
-
-              {/* Tooltip */}
-              {odabranaRegija && (
-                <div
-                  className="tooltip"
-                  style={{ left: hoverPos.x, top: hoverPos.y }}
-                >
-                  <div style={{ fontWeight: '700', marginBottom: '3px' }}>
-                    {odabranaRegija.regija__naziv}
-                  </div>
-                  <div style={{ color: getBoja(odabranaRegija.prosjecno), fontWeight: '700' }}>
-                    Prosjek: {Math.round(odabranaRegija.prosjecno)} dana
-                  </div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '2px' }}>
-                    Max: {odabranaRegija.maksimalno} dana
-                  </div>
-                </div>
-              )}
-            </>
+            <div
+              onClick={handleSvgClick}
+              onMouseMove={handleSvgMouseMove}
+              onMouseLeave={() => setHoveredId(null)}
+              dangerouslySetInnerHTML={{ __html: getColoredSvg() }}
+            />
           )}
         </div>
 
@@ -369,7 +295,7 @@ export default function KartaPage() {
                 <div className="info-stats">
                   <div>
                     <div className="stat-label">Prosjek</div>
-                    <div className="stat-value" style={{ color: getBoja(odabranaRegija.prosjecno) }}>
+                    <div className="stat-value" style={{ color: bojaDana(odabranaRegija.prosjecno) }}>
                       {Math.round(odabranaRegija.prosjecno)} dana
                     </div>
                   </div>
@@ -383,7 +309,7 @@ export default function KartaPage() {
               </>
             ) : (
               <div className="info-empty">
-                Pređi mišem<br />na krug
+                Pređi mišem<br />na županiju
               </div>
             )}
           </div>
@@ -401,7 +327,7 @@ export default function KartaPage() {
                     .replace(' županija', '')
                     .replace(' i Grad Zagreb', '')}
                 </span>
-                <span style={{ fontWeight: '700', color: getBoja(r.prosjecno) }}>
+                <span style={{ fontWeight: '700', color: bojaDana(r.prosjecno) }}>
                   {Math.round(r.prosjecno)}d
                 </span>
               </div>
